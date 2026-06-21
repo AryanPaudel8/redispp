@@ -4,6 +4,7 @@
 #include <iostream>
 #include <netdb.h>
 #include <string>
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -27,12 +28,12 @@ int main(int argc, char **argv) {
     std::cerr << "setsockopt failed\n";
     return 1;
   }
-
+  // Set up server Address Structure
   struct sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(6379);
-
+  // Bind the Socket to the port
   if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) !=
       0) {
     std::cerr << "Failed to bind to port 6379\n";
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
     std::cerr << "listen failed\n";
     return 1;
   }
-
+  // Prepare to accept connections
   struct sockaddr_in client_addr;
   int client_addr_len = sizeof(client_addr);
   std::cout << "Waiting for a client to connect...\n";
@@ -55,10 +56,12 @@ int main(int argc, char **argv) {
 
   //// Wait for and accept an incoming client connection
 
-  accept(server_fd, (struct sockaddr *)&client_addr,
-         (socklen_t *)&client_addr_len);
+  int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                         (socklen_t *)&client_addr_len);
   std::cout << "Client connected\n";
-
+  const char *response = "+PONG\r\n";
+  send(client_fd, response, strlen(response), 0);
+  close(client_fd);
   close(server_fd);
 
   return 0;
